@@ -1,4 +1,19 @@
-load("@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl", "tool_path")
+# inspired by: https://bazel.build/tutorials/ccp-toolchain-config
+
+load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
+load(
+    "@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl",
+    "feature",    # NEW
+    "flag_group", # NEW
+    "flag_set",   # NEW
+    "tool_path",
+)
+
+all_link_actions = [ # NEW
+    ACTION_NAMES.cpp_link_executable,
+    ACTION_NAMES.cpp_link_dynamic_library,
+    ACTION_NAMES.cpp_link_nodeps_dynamic_library,
+]
 
 
 def _impl(ctx):
@@ -37,8 +52,28 @@ def _impl(ctx):
     ),
    ]
 
+  features = [ # NEW
+    feature(
+      name = "default_linker_flags",
+      enabled = True,
+      flag_sets = [
+        flag_set(
+        actions = all_link_actions,
+        flag_groups = ([
+          flag_group(
+            flags = [
+              "-O2",
+            ],
+          ),
+        ]),
+       ),
+     ],
+   ),
+  ]
+
   return cc_common.create_cc_toolchain_config_info(
     ctx = ctx,
+    features = features,
     cxx_builtin_include_directories = [
       "/usr/include",
       "/usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h",
